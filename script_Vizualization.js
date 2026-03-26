@@ -12,14 +12,22 @@ const R_Galo = 100000
 
 function randomDiskRadius() {
     
-    const scale = 12000;
-    
+    const scale = 12000;          // масштабная длина экспоненты
+    const maxR = R_Disk;
+
+    // Используем распределение: p(r) ∝ (maxR - r) * exp(-r/scale)
+    // Генерируем методом отклонения (простой и надёжный)
     let r;
-    
+
     do {
+        // Предварительный радиус из экспоненциального распределения
         r = -scale * Math.log(1 - Math.random());
-    } while (r > R_Disk)
-    
+        if (r > maxR) continue;
+        // Вероятность принятия: (maxR - r) / maxR
+        const acceptProb = (maxR - r) / maxR;
+        if (Math.random() < acceptProb) break;
+    } while (true);
+
     return r;
 }
 
@@ -33,7 +41,7 @@ function randn() {
     return Math.sqrt(-2.0 * Math.log(u)) * Math.cos(2.0 * Math.PI * v);
 }
 
-function getDiskHalfThiсkness(radius) {
+function getDiskHalfThickness(radius) {
     
     const points = [
         { r: 0,  h: 1500 },
@@ -154,10 +162,22 @@ for (let i = 0; i < Total_Points; i++) {
             const armIndex = Math.floor(Math.random() * Arms_Count);
             const phase = (armIndex / Arms_Count) * 2 * Math.PI;
         
+            const r0 = Arm_R0;
+            const maxR = R_Disk;
+            const scale = 12000;
+
             let rArm;
+
             do {
-                rArm = randomDiskRadius();
-            } while (rArm < Arm_R0);
+                  rArm = r0 - scale * Math.log(1 - Math.random() * (1 - Math.exp(-(maxR - r0) / scale)));
+
+                  if (rArm > maxR) continue;
+
+                  const acceptProb = (maxR - rArm) / (maxR - r0);
+                  
+                  if (Math.random() < acceptProb) break;
+            } while (true);
+
         
             rArm *= (1 + Arm_Sigma_r * randn());
             if (rArm > R_Disk) rArm = R_Disk * 0.99;
