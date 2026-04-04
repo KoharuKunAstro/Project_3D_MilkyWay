@@ -16,15 +16,15 @@ function randomDiskRadius() {
     const maxR = R_Disk;
 
     // Используем распределение: p(r) ∝ (maxR - r) * exp(-r/scale)
-    // Генерируем методом отклонения (простой и надёжный)
+  
     let r;
 
     do {
-        // Предварительный радиус из экспоненциального распределения
         r = -scale * Math.log(1 - Math.random());
         if (r > maxR) continue;
-        // Вероятность принятия: (maxR - r) / maxR
+   
         const acceptProb = (maxR - r) / maxR;
+
         if (Math.random() < acceptProb) break;
     } while (true);
 
@@ -103,11 +103,13 @@ controls.minDistance = 10000;
 const position = new Float32Array(Total_Points * 3);
 const colors = new Float32Array(Total_Points * 3);
 
+//Генерация точек
+
 let countBulge = 0, countDisk = 0, countHalo = 0;
 let x, y, z;
 let r, g, b;
 
-// Генерация точек
+
 for (let i = 0; i < Total_Points; i++) {
     
     const typeRand = Math.random();
