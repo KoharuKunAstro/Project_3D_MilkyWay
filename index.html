@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Галактика | Молекулярное излучение</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #4a4a4a;
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        /* --- ОСНОВНОЙ КОНТЕЙНЕР --- */
+        .main-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 15px 0 12px 0;
+            position: relative;
+        }
+
+        /* --- ВЕРХНИЙ СВЕТЛО-СЕРЫЙ ОВАЛ (ЗАГОЛОВОК) --- */
+        .title-oval {
+            background: #b0b0b0;
+            margin: 0 20px 15px 20px;
+            padding: 8px 20px;
+            border-radius: 40px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .title-oval h1 {
+            font-family: 'Segoe UI', system-ui;
+            font-size: 22px;
+            font-weight: 600;
+            color: #333333;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+        }
+
+        /* --- ЧЕРНЫЙ ОВАЛ (ГАЛАКТИКА) --- */
+        .galaxy-viewport {
+            width: calc(100% - 40px);
+            margin: 0 20px 10px 20px;
+            flex: 1;
+            min-height: 0;
+            background: #0a0a0a;
+            border-radius: 60px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), inset 0 0 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* --- НИЖНЯЯ СТРОКА --- */
+        .bottom-row {
+            display: flex;
+            flex-direction: row;
+            align-items: stretch;
+            justify-content: space-between;
+            padding: 0 40px;
+            width: 100%;
+            gap: 30px;
+        }
+
+        /* --- ПАНЕЛЬ ФИЛЬТРАЦИИ --- */
+        .filter-panel {
+            background: #9a9a9a;
+            border-radius: 14px;
+            padding: 8px 12px;
+            width: 170px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-left: 3px solid #ffaa33;
+            backdrop-filter: blur(4px);
+        }
+
+        .filter-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            margin-bottom: 6px;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+            order: 2;
+            letter-spacing: 0.5px;
+        }
+
+        /* Toggle switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 16px;
+            flex-shrink: 0;
+            order: 1;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #555;
+            transition: 0.2s;
+            border-radius: 16px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "●";
+            height: 12px;
+            width: 12px;
+            left: 2px;
+            bottom: 2px;
+            background-color: #222;
+            border-radius: 50%;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            color: #555;
+            line-height: 1;
+        }
+
+        input:checked + .slider {
+            background-color: #3a8c3a;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(16px);
+            background-color: #222;
+            content: "●";
+            color: #3a8c3a;
+        }
+
+        /* --- СВЕТЛО-СЕРЫЙ КОНТЕЙНЕР --- */
+        .data-container {
+            background: #b0b0b0;
+            border-radius: 20px;
+            padding: 6px 12px;
+            width: 480px;
+            flex-shrink: 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .info-wrapper {
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: nowrap;
+        }
+
+        /* --- БЕЛЫЕ ПРЯМОУГОЛЬНИКИ --- */
+        .coord-box, .luminosity-box {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 6px 10px;
+            flex: 1;
+            min-width: 0;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .coord-box {
+            border-left: 3px solid #33aaff;
+        }
+
+        .luminosity-box {
+            border-left: 3px solid #ffaa33;
+        }
+
+        .panel-title {
+            font-family: 'Segoe UI', system-ui;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #555555;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 3px;
+            font-weight: 600;
+        }
+
+        .coord-box .panel-title {
+            color: #2288cc;
+        }
+
+        .luminosity-box .panel-title {
+            color: #cc8833;
+        }
+
+        /* --- СТРОКИ ПАРАМЕТРОВ --- */
+        .param-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 5px;
+            gap: 10px;
+        }
+
+        .param-label {
+            font-family: 'Segoe UI', system-ui;
+            font-size: 11px;
+            color: #444444;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .param-value {
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #222222;
+            background: #f0f0f0;
+            padding: 1px 8px;
+            border-radius: 20px;
+            text-align: right;
+            min-width: 70px;
+        }
+
+        .param-value.coord { color: #2288cc; }
+        .param-value.distance { color: #2c8c2c; }
+        .param-value.velocity { color: #cc6633; }
+        .param-value.luminosity { color: #cc8833; font-weight: 700; }
+
+        /* --- БЛОК ФОРМУЛЫ --- */
+        .formula-box {
+            margin-top: 6px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 4px 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .formula-label {
+            color: #888888;
+            font-size: 7px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 2px;
+            font-weight: 600;
+        }
+
+        .formula-content {
+            color: #333333;
+            font-size: 8px;
+            line-height: 1.3;
+            font-family: 'Consolas', monospace;
+        }
+
+        .formula-content .highlight {
+            color: #cc8833;
+            font-weight: bold;
+        }
+
+        /* --- ПАНЕЛЬ ЛЕГЕНДЫ --- */
+        .legend-panel {
+            background: #9a9a9a;
+            border-radius: 14px;
+            padding: 8px 12px;
+            width: 170px;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            border-right: 3px solid #33aaff;
+            backdrop-filter: blur(4px);
+        }
+
+        .legend-title {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            box-shadow: 0 0 4px currentColor;
+            flex-shrink: 0;
+        }
+
+        .legend-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+        }
+
+        /* Анимация обновления данных */
+        @keyframes dataFlash {
+            0% { background: #ffffff; }
+            50% { background: #e8f0ff; }
+            100% { background: #ffffff; }
+        }
+
+        .data-updated {
+            animation: dataFlash 0.25s ease-out;
+        }
+
+        /* Адаптация */
+        @media (max-width: 950px) {
+            .bottom-row {
+                padding: 0 30px;
+                gap: 20px;
+            }
+            .data-container {
+                width: 420px;
+            }
+            .filter-panel, .legend-panel {
+                width: 150px;
+            }
+            .legend-name {
+                font-size: 12px;
+            }
+            .filter-label {
+                font-size: 11px;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .bottom-row {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 15px;
+                padding: 0 20px;
+            }
+            .filter-panel, .legend-panel {
+                width: calc(50% - 20px);
+            }
+            .data-container {
+                order: -1;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+
+        @media (max-width: 550px) {
+            .filter-panel, .legend-panel {
+                width: 100%;
+            }
+            .info-wrapper {
+                flex-wrap: wrap;
+            }
+            .title-oval h1 {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <!-- ВЕРХНИЙ СВЕТЛО-СЕРЫЙ ОВАЛ (ЗАГОЛОВОК) -->
+        <div class="title-oval">
+            <h1>3D ГАЛАКТИКА</h1>
+        </div>
+
+        <!-- ЧЕРНЫЙ ОВАЛ (ГАЛАКТИКА) -->
+        <div class="galaxy-viewport">
+            <div id="canvas-container"></div>
+        </div>
+
+        <!-- НИЖНЯЯ СТРОКА -->
+        <div class="bottom-row">
+            <!-- ФИЛЬТРЫ -->
+            <div class="filter-panel">
+                <div class="filter-title">🔘 ФИЛЬТРЫ</div>
+                
+                <div class="filter-item">
+                    <label class="switch">
+                        <input type="checkbox" class="filter-checkbox" data-filter="co" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="filter-label">CO</span>
+                </div>
+                
+                <div class="filter-item">
+                    <label class="switch">
+                        <input type="checkbox" class="filter-checkbox" data-filter="oh" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="filter-label">OH</span>
+                </div>
+                
+                <div class="filter-item">
+                    <label class="switch">
+                        <input type="checkbox" class="filter-checkbox" data-filter="h2o" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="filter-label">H₂O</span>
+                </div>
+                
+                <div class="filter-item">
+                    <label class="switch">
+                        <input type="checkbox" class="filter-checkbox" data-filter="hco" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="filter-label">HCO⁺</span>
+                </div>
+            </div>
+
+            <!-- СВЕТЛО-СЕРЫЙ КОНТЕЙНЕР -->
+            <div class="data-container">
+                <div class="info-wrapper">
+                    <!-- КООРДИНАТЫ -->
+                    <div class="coord-box" id="coordPanel">
+                        <div class="panel-title">📡 ГАЛАКТИЧЕСКИЕ КООРДИНАТЫ</div>
+                        <div class="param-row">
+                            <span class="param-label">Долгота (l)</span>
+                            <span class="param-value coord" id="coordL">—</span>
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Широта (b)</span>
+                            <span class="param-value coord" id="coordB">—</span>
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Расстояние (r)</span>
+                            <span class="param-value distance" id="distanceR">—</span>
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Скорость (V)</span>
+                            <span class="param-value velocity" id="velocityV">—</span>
+                        </div>
+                    </div>
+
+                    <!-- ПАРАМЕТРЫ (светимость L) -->
+                    <div class="luminosity-box" id="luminosityPanel">
+                        <div class="panel-title">✨ ФИЗИЧЕСКИЕ ПАРАМЕТРЫ</div>
+                        <div class="param-row">
+                            <span class="param-label">Светимость (L)</span>
+                            <span class="param-value luminosity" id="luminosityL">—</span>
+                        </div>
+                        <div class="formula-box">
+                            <div class="formula-label">⚡ ЗАКОН СТЕФАНА–БОЛЬЦМАНА</div>
+                            <div class="formula-content">
+                                <span class="highlight">L = 4π·R²·σ·T⁴</span><br>
+                                M = M☉ - 2.5·log₁₀(L/L☉)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ЛЕГЕНДА -->
+            <div class="legend-panel">
+                <div class="legend-title">⭐ МОЛЕКУЛЫ</div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ff5533;"></div>
+                    <span class="legend-name">CO</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #4488ff;"></div>
+                    <span class="legend-name">OH</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #ffcc44;"></div>
+                    <span class="legend-name">H₂O</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #cceeff;"></div>
+                    <span class="legend-name">HCO⁺</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/"
+            }
+        }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        // --- НАСТРОЙКИ СЦЕНЫ ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        scene.fog = new THREE.FogExp2(0x0a0a0a, 0.002);
+
+        const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.set(0, 8, 24);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = false;
+        container.appendChild(renderer.domElement);
+
+        // --- УПРАВЛЕНИЕ ---
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.autoRotate = true;
+        controls.autoRotateSpeed = 0.5;
+        controls.enableZoom = true;
+        controls.maxDistance = 45;
+        controls.minDistance = 6;
+
+        // --- ОСВЕЩЕНИЕ ---
+        const ambientLight = new THREE.AmbientLight(0x202030);
+        scene.add(ambientLight);
+        const coreLight = new THREE.PointLight(0xffaa55, 2.2, 50);
+        coreLight.position.set(0, 0, 0);
+        scene.add(coreLight);
+        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.4);
+        fillLight.position.set(5, 10, 7);
+        scene.add(fillLight);
+
+        // --- ЯДРО ГАЛАКТИКИ ---
+        const coreGeo = new THREE.SphereGeometry(1.4, 64, 64);
+        const coreMat = new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0x442200 });
+        const core = new THREE.Mesh(coreGeo, coreMat);
+        scene.add(core);
+
+        const glowGeo = new THREE.SphereGeometry(2.3, 32, 32);
+        const glowMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.12 });
+        const glow = new THREE.Mesh(glowGeo, glowMat);
+        scene.add(glow);
+
+        // --- МАССИВЫ ---
+        const backgroundStars = [];
+        const specialObjects = [];
+        let allSpecialObjects = [];
+
+        // Типы МОЛЕКУЛ
+        const molecularTypes = [
+            { id: 'co', name: 'CO', color: 0xff5533, size: 0.48, luminosity: '120 L☉' },
+            { id: 'oh', name: 'OH', color: 0x4488ff, size: 0.58, luminosity: '0.25 L☉' },
+            { id: 'h2o', name: 'H₂O', color: 0xffcc44, size: 0.34, luminosity: '1.02 L☉' },
+            { id: 'hco', name: 'HCO⁺', color: 0xcceeff, size: 0.42, luminosity: '0.012 L☉' }
+        ];
+
+        function createBackgroundStar(x, y, z) {
+            const geo = new THREE.SphereGeometry(0.05, 4);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x222222 });
+            const star = new THREE.Mesh(geo, mat);
+            star.position.set(x, y, z);
+            return star;
+        }
+
+        function createMolecularObject(x, y, z, molType) {
+            const l_rad = Math.atan2(z, x);
+            const b_rad = Math.asin(y / Math.sqrt(x*x + y*y + z*z));
+            const l_deg = (l_rad * 180 / Math.PI + 360) % 360;
+            const b_deg = b_rad * 180 / Math.PI;
+            const distance = Math.sqrt(x*x + y*y + z*z).toFixed(1);
+            const velocity = (Math.random() * 200 + 20).toFixed(0);
+            
+            let luminosity = molType.luminosity;
+            // Добавляем небольшую вариацию
+            if (Math.random() > 0.5) {
+                const val = parseFloat(luminosity) * (0.7 + Math.random() * 0.6);
+                luminosity = val.toFixed(1) + ' L☉';
+            }
+            
+            const molecularData = {
+                name: molType.name,
+                typeId: molType.id,
+                luminosity: luminosity,
+                galactic_l: l_deg.toFixed(1),
+                galactic_b: b_deg.toFixed(1),
+                distance: distance,
+                velocity: velocity,
+                typeColor: molType.color
+            };
+            
+            const geo = new THREE.SphereGeometry(molType.size, 32);
+            const mat = new THREE.MeshStandardMaterial({
+                color: molType.color,
+                emissive: new THREE.Color(molType.color).multiplyScalar(0.5),
+                emissiveIntensity: 0.7
+            });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.userData = molecularData;
+            mesh.userData.typeId = molType.id;
+            return mesh;
+        }
+
+        // Фоновые звёзды
+        for (let i = 0; i < 6500; i++) {
+            const radius = Math.pow(Math.random(), 1.4) * 15;
+            const angle = Math.random() * Math.PI * 2;
+            const height = (Math.random() - 0.5) * 2.0;
+            const x = Math.cos(angle) * radius;
+            const z = Math.sin(angle) * radius;
+            const y = height;
+            const star = createBackgroundStar(x, y, z);
+            scene.add(star);
+            backgroundStars.push(star);
+        }
+
+        // Рукава
+        for (let a = 0; a < 4; a++) {
+            for (let i = 0; i < 650; i++) {
+                const t = i / 650;
+                const radius = 2.8 + t * 13;
+                const angle = (a / 4) * Math.PI * 2 + t * 7 + (Math.random() - 0.5) * 0.35;
+                const height = (Math.random() - 0.5) * 1.6;
+                const x = Math.cos(angle) * radius;
+                const z = Math.sin(angle) * radius;
+                const y = height;
+                const star = createBackgroundStar(x, y, z);
+                scene.add(star);
+                backgroundStars.push(star);
+            }
+        }
+
+        // Особые объекты (молекулярные облака)
+        const positions = [];
+        for (let i = 0; i < 32; i++) {
+            let radius, angle, height;
+            if (i < 10) {
+                radius = Math.random() * 4;
+                angle = Math.random() * Math.PI * 2;
+                height = (Math.random() - 0.5) * 1.2;
+            } else if (i < 22) {
+                radius = 4.5 + Math.random() * 7.5;
+                angle = (Math.floor(Math.random() * 4) / 4) * Math.PI * 2 + Math.random() * 1.2;
+                height = (Math.random() - 0.5) * 1.5;
+            } else {
+                radius = 9 + Math.random() * 6;
+                angle = Math.random() * Math.PI * 2;
+                height = (Math.random() - 0.5) * 1.8;
+            }
+            positions.push({ x: Math.cos(angle) * radius, y: height, z: Math.sin(angle) * radius });
+        }
+
+        const types = [molecularTypes[0], molecularTypes[1], molecularTypes[2], molecularTypes[3]];
+        for (let i = 0; i < positions.length; i++) {
+            const typeIdx = i % types.length;
+            const obj = createMolecularObject(positions[i].x, positions[i].y, positions[i].z, types[typeIdx]);
+            scene.add(obj);
+            allSpecialObjects.push(obj);
+            specialObjects.push(obj);
+        }
+
+        // Туманности
+        for (let i = 0; i < 12; i++) {
+            const fogGeo = new THREE.SphereGeometry(2 + Math.random() * 7, 16);
+            const fogMat = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL(0.6 + Math.random() * 0.2, 0.5, 0.1),
+                transparent: true,
+                opacity: 0.015,
+                side: THREE.BackSide
+            });
+            const fog = new THREE.Mesh(fogGeo, fogMat);
+            fog.position.set((Math.random() - 0.5) * 22, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 22);
+            scene.add(fog);
+        }
+
+        // --- ФИЛЬТРАЦИЯ ---
+        let activeFilters = {
+            co: true,
+            oh: true,
+            h2o: true,
+            hco: true
+        };
+
+        function updateFilters() {
+            specialObjects.length = 0;
+            allSpecialObjects.forEach(obj => {
+                const typeId = obj.userData.typeId;
+                if (activeFilters[typeId]) {
+                    obj.visible = true;
+                    specialObjects.push(obj);
+                } else {
+                    obj.visible = false;
+                }
+            });
+            if (hoveredObject && !hoveredObject.visible) {
+                if (hoveredObject) {
+                    hoveredObject.material.emissive.setHex(hoveredObject.userData.oldEmissive || 0x000000);
+                    hoveredObject.scale.set(1, 1, 1);
+                    hoveredObject = null;
+                    hideUI();
+                }
+            }
+        }
+
+        const checkboxes = document.querySelectorAll('.filter-checkbox');
+        checkboxes.forEach(checkbox => {
+            const filterId = checkbox.getAttribute('data-filter');
+            checkbox.addEventListener('change', (e) => {
+                activeFilters[filterId] = e.target.checked;
+                updateFilters();
+            });
+        });
+
+        // --- РЕЙКАСТИНГ ---
+        const raycaster = new THREE.Raycaster();
+        const mouse = new THREE.Vector2();
+        let hoveredObject = null;
+
+        function updateUI(data) {
+            document.getElementById('coordL').textContent = data.galactic_l + '°';
+            document.getElementById('coordB').textContent = data.galactic_b + '°';
+            document.getElementById('distanceR').textContent = data.distance + ' пк';
+            document.getElementById('velocityV').textContent = data.velocity + ' км/с';
+            document.getElementById('luminosityL').textContent = data.luminosity || '—';
+            
+            document.querySelectorAll('.coord-box, .luminosity-box').forEach(el => {
+                el.classList.add('data-updated');
+                setTimeout(() => el.classList.remove('data-updated'), 250);
+            });
+        }
+
+        function hideUI() {
+            document.getElementById('coordL').textContent = '—';
+            document.getElementById('coordB').textContent = '—';
+            document.getElementById('distanceR').textContent = '—';
+            document.getElementById('velocityV').textContent = '—';
+            document.getElementById('luminosityL').textContent = '—';
+        }
+
+        renderer.domElement.addEventListener('mousemove', (event) => {
+            const rect = renderer.domElement.getBoundingClientRect();
+            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+            raycaster.setFromCamera(mouse, camera);
+            const intersects = raycaster.intersectObjects(specialObjects);
+            
+            if (intersects.length > 0) {
+                const obj = intersects[0].object;
+                if (hoveredObject !== obj) {
+                    if (hoveredObject) {
+                        hoveredObject.material.emissive.setHex(hoveredObject.userData.oldEmissive || 0x000000);
+                        hoveredObject.scale.set(1, 1, 1);
+                    }
+                    if (!obj.userData.oldEmissive) obj.userData.oldEmissive = obj.material.emissive.getHex();
+                    obj.material.emissive.setHex(0xffaa66);
+                    obj.scale.set(1.25, 1.25, 1.25);
+                    updateUI(obj.userData);
+                    hoveredObject = obj;
+                }
+            } else {
+                if (hoveredObject) {
+                    hoveredObject.material.emissive.setHex(hoveredObject.userData.oldEmissive || 0x000000);
+                    hoveredObject.scale.set(1, 1, 1);
+                    hoveredObject = null;
+                    hideUI();
+                }
+            }
+        });
+
+        // --- АНИМАЦИЯ ---
+        let time = 0;
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.002;
+            const scale = 1 + Math.sin(time * 10) * 0.02;
+            core.scale.set(scale, scale, scale);
+            glow.scale.set(scale * 1.2, scale * 1.2, scale * 1.2);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+
+        const resizeObserver = new ResizeObserver(() => {
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+            camera.aspect = width / height;
+            camera.updateProjectionMatrix();
+            renderer.setSize(width, height);
+        });
+        resizeObserver.observe(container);
+        
+        console.log('Галактика загружена! Молекулы: CO, OH, H₂O, HCO⁺');
+    </script>
+</body>
+</html>
