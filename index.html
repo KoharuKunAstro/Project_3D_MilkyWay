@@ -14,7 +14,7 @@
         body {
             margin: 0;
             min-height: 100vh;
-            background: #4a4a4a;
+            background: #1e1e1e;
             font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, 'Roboto', sans-serif;
             display: flex;
             justify-content: center;
@@ -34,7 +34,7 @@
 
         /* --- ВЕРХНИЙ СВЕТЛО-СЕРЫЙ ОВАЛ (ЗАГОЛОВОК) --- */
         .title-oval {
-            background: #b0b0b0;
+            background: #6c7e82;
             margin: 0 20px 15px 20px;
             padding: 8px 20px;
             border-radius: 40px;
@@ -47,7 +47,7 @@
             font-family: 'Segoe UI', system-ui;
             font-size: 22px;
             font-weight: 600;
-            color: #333333;
+            color: #ffffff;
             letter-spacing: 3px;
             text-transform: uppercase;
         }
@@ -85,7 +85,7 @@
 
         /* --- ПАНЕЛЬ ФИЛЬТРАЦИИ --- */
         .filter-panel {
-            background: #9a9a9a;
+            background: #6c7e82;
             border-radius: 14px;
             padding: 8px 12px;
             width: 170px;
@@ -300,7 +300,7 @@
 
         /* --- ПАНЕЛЬ ЛЕГЕНДЫ --- */
         .legend-panel {
-            background: #9a9a9a;
+            background: #6c7e82;
             border-radius: 14px;
             padding: 8px 12px;
             width: 170px;
@@ -528,313 +528,6 @@
             }
         }
     </script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
-        // --- НАСТРОЙКИ СЦЕНЫ ---
-        const container = document.getElementById('canvas-container');
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x0a0a0a);
-        scene.fog = new THREE.FogExp2(0x0a0a0a, 0.002);
-
-        const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 1000);
-        camera.position.set(0, 8, 24);
-        camera.lookAt(0, 0, 0);
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
-        renderer.shadowMap.enabled = false;
-        container.appendChild(renderer.domElement);
-
-        // --- УПРАВЛЕНИЕ ---
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.autoRotate = true;
-        controls.autoRotateSpeed = 0.5;
-        controls.enableZoom = true;
-        controls.maxDistance = 45;
-        controls.minDistance = 6;
-
-        // --- ОСВЕЩЕНИЕ ---
-        const ambientLight = new THREE.AmbientLight(0x202030);
-        scene.add(ambientLight);
-        const coreLight = new THREE.PointLight(0xffaa55, 2.2, 50);
-        coreLight.position.set(0, 0, 0);
-        scene.add(coreLight);
-        const fillLight = new THREE.DirectionalLight(0x88aaff, 0.4);
-        fillLight.position.set(5, 10, 7);
-        scene.add(fillLight);
-
-        // --- ЯДРО ГАЛАКТИКИ ---
-        const coreGeo = new THREE.SphereGeometry(1.4, 64, 64);
-        const coreMat = new THREE.MeshStandardMaterial({ color: 0xffaa33, emissive: 0x442200 });
-        const core = new THREE.Mesh(coreGeo, coreMat);
-        scene.add(core);
-
-        const glowGeo = new THREE.SphereGeometry(2.3, 32, 32);
-        const glowMat = new THREE.MeshBasicMaterial({ color: 0xff6600, transparent: true, opacity: 0.12 });
-        const glow = new THREE.Mesh(glowGeo, glowMat);
-        scene.add(glow);
-
-        // --- МАССИВЫ ---
-        const backgroundStars = [];
-        const specialObjects = [];
-        let allSpecialObjects = [];
-
-        // Типы МОЛЕКУЛ
-        const molecularTypes = [
-            { id: 'co', name: 'CO', color: 0xff5533, size: 0.48, luminosity: '120 L☉' },
-            { id: 'oh', name: 'OH', color: 0x4488ff, size: 0.58, luminosity: '0.25 L☉' },
-            { id: 'h2o', name: 'H₂O', color: 0xffcc44, size: 0.34, luminosity: '1.02 L☉' },
-            { id: 'hco', name: 'HCO⁺', color: 0xcceeff, size: 0.42, luminosity: '0.012 L☉' }
-        ];
-
-        function createBackgroundStar(x, y, z) {
-            const geo = new THREE.SphereGeometry(0.05, 4);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0x222222 });
-            const star = new THREE.Mesh(geo, mat);
-            star.position.set(x, y, z);
-            return star;
-        }
-
-        function createMolecularObject(x, y, z, molType) {
-            const l_rad = Math.atan2(z, x);
-            const b_rad = Math.asin(y / Math.sqrt(x*x + y*y + z*z));
-            const l_deg = (l_rad * 180 / Math.PI + 360) % 360;
-            const b_deg = b_rad * 180 / Math.PI;
-            const distance = Math.sqrt(x*x + y*y + z*z).toFixed(1);
-            const velocity = (Math.random() * 200 + 20).toFixed(0);
-            
-            let luminosity = molType.luminosity;
-            // Добавляем небольшую вариацию
-            if (Math.random() > 0.5) {
-                const val = parseFloat(luminosity) * (0.7 + Math.random() * 0.6);
-                luminosity = val.toFixed(1) + ' L☉';
-            }
-            
-            const molecularData = {
-                name: molType.name,
-                typeId: molType.id,
-                luminosity: luminosity,
-                galactic_l: l_deg.toFixed(1),
-                galactic_b: b_deg.toFixed(1),
-                distance: distance,
-                velocity: velocity,
-                typeColor: molType.color
-            };
-            
-            const geo = new THREE.SphereGeometry(molType.size, 32);
-            const mat = new THREE.MeshStandardMaterial({
-                color: molType.color,
-                emissive: new THREE.Color(molType.color).multiplyScalar(0.5),
-                emissiveIntensity: 0.7
-            });
-            const mesh = new THREE.Mesh(geo, mat);
-            mesh.position.set(x, y, z);
-            mesh.userData = molecularData;
-            mesh.userData.typeId = molType.id;
-            return mesh;
-        }
-
-        // Фоновые звёзды
-        for (let i = 0; i < 6500; i++) {
-            const radius = Math.pow(Math.random(), 1.4) * 15;
-            const angle = Math.random() * Math.PI * 2;
-            const height = (Math.random() - 0.5) * 2.0;
-            const x = Math.cos(angle) * radius;
-            const z = Math.sin(angle) * radius;
-            const y = height;
-            const star = createBackgroundStar(x, y, z);
-            scene.add(star);
-            backgroundStars.push(star);
-        }
-
-        // Рукава
-        for (let a = 0; a < 4; a++) {
-            for (let i = 0; i < 650; i++) {
-                const t = i / 650;
-                const radius = 2.8 + t * 13;
-                const angle = (a / 4) * Math.PI * 2 + t * 7 + (Math.random() - 0.5) * 0.35;
-                const height = (Math.random() - 0.5) * 1.6;
-                const x = Math.cos(angle) * radius;
-                const z = Math.sin(angle) * radius;
-                const y = height;
-                const star = createBackgroundStar(x, y, z);
-                scene.add(star);
-                backgroundStars.push(star);
-            }
-        }
-
-        // Особые объекты (молекулярные облака)
-        const positions = [];
-        for (let i = 0; i < 32; i++) {
-            let radius, angle, height;
-            if (i < 10) {
-                radius = Math.random() * 4;
-                angle = Math.random() * Math.PI * 2;
-                height = (Math.random() - 0.5) * 1.2;
-            } else if (i < 22) {
-                radius = 4.5 + Math.random() * 7.5;
-                angle = (Math.floor(Math.random() * 4) / 4) * Math.PI * 2 + Math.random() * 1.2;
-                height = (Math.random() - 0.5) * 1.5;
-            } else {
-                radius = 9 + Math.random() * 6;
-                angle = Math.random() * Math.PI * 2;
-                height = (Math.random() - 0.5) * 1.8;
-            }
-            positions.push({ x: Math.cos(angle) * radius, y: height, z: Math.sin(angle) * radius });
-        }
-
-        const types = [molecularTypes[0], molecularTypes[1], molecularTypes[2], molecularTypes[3]];
-        for (let i = 0; i < positions.length; i++) {
-            const typeIdx = i % types.length;
-            const obj = createMolecularObject(positions[i].x, positions[i].y, positions[i].z, types[typeIdx]);
-            scene.add(obj);
-            allSpecialObjects.push(obj);
-            specialObjects.push(obj);
-        }
-
-        // Туманности
-        for (let i = 0; i < 12; i++) {
-            const fogGeo = new THREE.SphereGeometry(2 + Math.random() * 7, 16);
-            const fogMat = new THREE.MeshBasicMaterial({
-                color: new THREE.Color().setHSL(0.6 + Math.random() * 0.2, 0.5, 0.1),
-                transparent: true,
-                opacity: 0.015,
-                side: THREE.BackSide
-            });
-            const fog = new THREE.Mesh(fogGeo, fogMat);
-            fog.position.set((Math.random() - 0.5) * 22, (Math.random() - 0.5) * 5, (Math.random() - 0.5) * 22);
-            scene.add(fog);
-        }
-
-        // --- ФИЛЬТРАЦИЯ ---
-        let activeFilters = {
-            co: true,
-            oh: true,
-            h2o: true,
-            hco: true
-        };
-
-        function updateFilters() {
-            specialObjects.length = 0;
-            allSpecialObjects.forEach(obj => {
-                const typeId = obj.userData.typeId;
-                if (activeFilters[typeId]) {
-                    obj.visible = true;
-                    specialObjects.push(obj);
-                } else {
-                    obj.visible = false;
-                }
-            });
-            if (hoveredObject && !hoveredObject.visible) {
-                if (hoveredObject) {
-                    hoveredObject.material.emissive.setHex(hoveredObject.userData.oldEmissive || 0x000000);
-                    hoveredObject.scale.set(1, 1, 1);
-                    hoveredObject = null;
-                    hideUI();
-                }
-            }
-        }
-
-        const checkboxes = document.querySelectorAll('.filter-checkbox');
-        checkboxes.forEach(checkbox => {
-            const filterId = checkbox.getAttribute('data-filter');
-            checkbox.addEventListener('change', (e) => {
-                activeFilters[filterId] = e.target.checked;
-                updateFilters();
-            });
-        });
-
-        // --- РЕЙКАСТИНГ ---
-        const raycaster = new THREE.Raycaster();
-        const mouse = new THREE.Vector2();
-        let hoveredObject = null;
-
-        function updateUI(data) {
-            document.getElementById('coordL').textContent = data.galactic_l + '°';
-            document.getElementById('coordB').textContent = data.galactic_b + '°';
-            document.getElementById('distanceR').textContent = data.distance + ' пк';
-            document.getElementById('velocityV').textContent = data.velocity + ' км/с';
-            document.getElementById('luminosityL').textContent = data.luminosity || '—';
-            
-            document.querySelectorAll('.coord-box, .luminosity-box').forEach(el => {
-                el.classList.add('data-updated');
-                setTimeout(() => el.classList.remove('data-updated'), 250);
-            });
-        }
-
-        function hideUI() {
-            document.getElementById('coordL').textContent = '—';
-            document.getElementById('coordB').textContent = '—';
-            document.getElementById('distanceR').textContent = '—';
-            document.getElementById('velocityV').textContent = '—';
-            document.getElementById('luminosityL').textContent = '—';
-        }
-
-        renderer.domElement.addEventListener('mousemove', (event) => {
-            const rect = renderer.domElement.getBoundingClientRect();
-            mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-            mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-            raycaster.setFromCamera(mouse, camera);
-            const intersects = raycaster.intersectObjects(specialObjects);
-            
-            if (intersects.length > 0) {
-                const obj = intersects[0].object;
-                if (hoveredObject !== obj) {
-                    if (hoveredObject) {
-                        hoveredObject.material.emissive.setHex(hoveredObject.userData.oldEmissive || 0x000000);
-                        hoveredObject.scale.set(1, 1, 1);
-                    }
-                    if (!obj.userData.oldEmissive) obj.userData.oldEmissive = obj.material.emissive.getHex();
-                    obj.material.emissive.setHex(0xffaa66);
-                    obj.scale.set(1.25, 1.25, 1.25);
-                    updateUI(obj.userData);
-                    hoveredObject = obj;
-                }
-            } else {
-                if (hoveredObject) {
-                    hoveredObject.material.emissive.setHex(hoveredObject.userData.oldEmissive || 0x000000);
-                    hoveredObject.scale.set(1, 1, 1);
-                    hoveredObject = null;
-                    hideUI();
-                }
-            }
-        });
-
-        // --- АНИМАЦИЯ ---
-        let time = 0;
-        function animate() {
-            requestAnimationFrame(animate);
-            time += 0.002;
-            const scale = 1 + Math.sin(time * 10) * 0.02;
-            core.scale.set(scale, scale, scale);
-            glow.scale.set(scale * 1.2, scale * 1.2, scale * 1.2);
-            controls.update();
-            renderer.render(scene, camera);
-        }
-        animate();
-
-        window.addEventListener('resize', () => {
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-        });
-
-        const resizeObserver = new ResizeObserver(() => {
-            const width = container.clientWidth;
-            const height = container.clientHeight;
-            camera.aspect = width / height;
-            camera.updateProjectionMatrix();
-            renderer.setSize(width, height);
-        });
-        resizeObserver.observe(container);
-        
-        console.log('Галактика загружена! Молекулы: CO, OH, H₂O, HCO⁺');
-    </script>
+    <script type="module" src="./src/main.js"></script>
 </body>
 </html>

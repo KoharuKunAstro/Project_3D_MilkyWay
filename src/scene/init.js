@@ -5,14 +5,16 @@ export function initScene() {
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x050510);
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 200000);
-    camera.position.set(80000, 30000, 100000);
+    const container = document.getElementById('canvas-container')
+
+    const camera = new THREE.PerspectiveCamera(45, container.innerWidth / container.innerHeight, 1, 200000);
+    camera.position.set(0, -100000, 10000);
     camera.lookAt(0, 0, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(container.innerWidth, container.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    document.body.appendChild(renderer.domElement);
+    container.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
