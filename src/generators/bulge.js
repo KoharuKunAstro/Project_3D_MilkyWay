@@ -31,7 +31,7 @@ export function generateBuldgePoint() {
             x, y, z,
             r: 1.0,
             g: 0.8 + 0.2 * Math.random(),
-            b: 0.4 + 0.2 * Math.random()
+            b: 0.3 + 0.2 * Math.random()
         };
     }
 }
