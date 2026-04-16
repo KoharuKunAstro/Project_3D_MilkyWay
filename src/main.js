@@ -7,7 +7,7 @@ import { initScene } from './scene/init.js';
 import { initPostProcessing } from './scene/postprocessing.js';
 import { createStarMaterial } from './materials/starmaterials.js';
 
-const {scene, camera, renderer, controls} = initScene();
+const {scene, camera, renderer, controls, container} = initScene();
 const composer = initPostProcessing(renderer, scene, camera);
 
 const position = new Float32Array(Total_Points * 3);
@@ -52,8 +52,8 @@ animate();
 
 // Ресайз
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.aspect = container.clientWidth / container.clientHeight;
     camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    composer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    composer.setSize(container.clientWidth, container.clientHeight);
 });

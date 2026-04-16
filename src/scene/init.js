@@ -7,12 +7,12 @@ export function initScene() {
 
     const container = document.getElementById('canvas-container')
 
-    const camera = new THREE.PerspectiveCamera(45, container.innerWidth / container.innerHeight, 1, 200000);
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth/ container.clientHeight, 1, 200000);
     camera.position.set(0, -100000, 10000);
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setSize(container.innerWidth, container.innerHeight);
+    renderer.setSize(container.clientWidth, container.clientHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     container.appendChild(renderer.domElement);
 
@@ -23,5 +23,5 @@ export function initScene() {
     controls.maxDistance = 200000;
     controls.minDistance = 10000;
 
-    return {scene, camera, renderer, controls};
+    return {scene, camera, renderer, controls, container};
 }
