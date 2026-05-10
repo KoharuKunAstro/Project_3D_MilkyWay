@@ -6,7 +6,7 @@ import { generateHaloPoint } from './generators/halo.js';
 import { initScene } from './scene/init.js';
 import { initPostProcessing } from './scene/postprocessing.js';
 import { createStarMaterial } from './materials/starMaterials.js';
-import { createObjectMaterials } from './materials/objectMaterials.js';
+import { createObjectMaterials, updateMaterialsByFilters } from './materials/objectMaterials.js';
 
 const {scene, camera, renderer, controls, container} = initScene();
 const {composer, bloomPass} = initPostProcessing(renderer, scene, camera);
@@ -43,13 +43,36 @@ const material = createStarMaterial();
 const points = new THREE.Points(geometry, material);
 scene.add(points);
 
+let objectsGroup;
+
 fetch('merged_objects.json')
    .then(res => res.json())
    .then(data => {
-      const group = createObjectMaterials(data, 350);
-      scene.add(group);
-   });
+      objectsGroup = createObjectMaterials(data, 350); // радиус 50
+      scene.add(objectsGroup);
 
+      function applyFilters() {
+          const activeMolecules = new Set();
+          document.querySelectorAll('.filter-checkbox').forEach(cb => {
+              if (cb.checked) {
+                  const filter = cb.getAttribute('data-filter');
+                  switch(filter) {
+                      case 'co': activeMolecules.add('CO'); break;
+                      case 'oh': activeMolecules.add('OH'); break;
+                      case 'h2o': activeMolecules.add('H2O'); break;
+                      case 'hco': activeMolecules.add('HCO+'); break;
+                  }
+              }
+          });
+          updateMaterialsByFilters(objectsGroup, activeMolecules);
+      }
+
+      document.querySelectorAll('.filter-checkbox').forEach(cb => {
+          cb.addEventListener('change', applyFilters);
+      });
+      applyFilters(); // начальное состояние (все фильтры включены)
+   });
+   
 // Анимация
 function animate() {
     requestAnimationFrame(animate);

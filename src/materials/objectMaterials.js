@@ -1,3 +1,4 @@
+// objectMaterials.js
 import * as THREE from 'three';
 import { createGlowSphereMaterial } from './glowSphereMaterials.js';
 
@@ -8,61 +9,85 @@ const CRITERIA_COLORS = {
     'HCO+': 0xe0e0e0
 };
 
-/**
- * Создаёт группу светящихся сфер на основе данных JSON.
- * @param {Array} data – массив объектов из JSON
- * @param {number} [baseRadius=40] – базовый радиус сфер
- * @returns {THREE.Group}
- */
+// Единая функция преобразования астрономических координат в декартовы
+// (вертикаль Z, совместимо с генераторами звёзд)
+function astroToCartesian(l, b, r, scale = 3.2) {
+    const lRad = l * Math.PI / 180;
+    const bRad = b * Math.PI / 180;
+    const x = (r * scale) * Math.cos(lRad) * Math.cos(bRad);
+    const y = (r * scale) * Math.sin(lRad) * Math.cos(bRad);
+    const z = (r * scale) * Math.sin(bRad);
+    return new THREE.Vector3(x, y, z);
+}
+
 export function createObjectMaterials(data, baseRadius = 40) {
     const group = new THREE.Group();
     const geometry = new THREE.SphereGeometry(1, 48, 48);
 
     data.forEach(item => {
-        // 1. Сбор значений критериев и вычисление цвета
-        let totalWeight = 0;
-        const color = new THREE.Color(0, 0, 0);
-        let maxValue = 0; // для интенсивности
-
-        for (const [key, hexColor] of Object.entries(CRITERIA_COLORS)) {
-            const value = item[key];
-            if (typeof value === 'number' && !Number.isNaN(value)) {
-                totalWeight += value;
-                color.add(new THREE.Color(hexColor).multiplyScalar(value));
-                if (value > maxValue) maxValue = value;
-            }
+        // Сохраняем значения всех молекул
+        const moleculeValues = {};
+        for (const key of Object.keys(CRITERIA_COLORS)) {
+            const val = item[key];
+            moleculeValues[key] = (typeof val === 'number' && !Number.isNaN(val)) ? val : 0;
         }
 
-        // Если нет ни одного критерия – серая сфера
-        if (totalWeight === 0) {
-            color.set(0x888888);
-        } else {
-            color.multiplyScalar(1 / totalWeight); // средневзвешенный цвет
-        }
-
-        // 2. Интенсивность = максимальное значение критерия, приведённое к 0…1
-        //    (диапазон 1–6 → 0–1)
-        const intensity = Math.min(maxValue, 6);
-
-        // 3. Создаём материал
-        const material = createGlowSphereMaterial(color, intensity, 2.5);
-
-        // 4. Сфера
+        // Временный материал (будет пересчитан фильтрами)
+        const material = createGlowSphereMaterial(0x000000, 0, 2.5);
         const sphere = new THREE.Mesh(geometry, material);
         sphere.scale.setScalar(baseRadius);
 
-        // 5. Позиция в декартовых координатах
-        const lRad = item.l * Math.PI / 180;   // больше не зависит от THREE.MathUtils
-        const bRad = item.b * Math.PI / 180;
-        const r = item.r ?? 500;               // fallback на случай отсутствия r
-        sphere.position.set(
-            (r * 3.2) * Math.cos(lRad) * Math.cos(Math.PI / 2 - bRad),
-            (r * 3.2) * Math.sin(Math.PI / 2 - bRad),
-            (r * 3.2) * Math.sin(lRad) * Math.cos(Math.PI / 2 - bRad)
-        );
+        // --- НОВАЯ ПОЗИЦИЯ через astroToCartesian ---
+        const r = item.r ?? 500;
+        const pos = astroToCartesian(item.l, item.b, r, 3.2);
+        sphere.position.copy(pos);
 
+        sphere.userData = {
+            moleculeValues,
+            material
+        };
         group.add(sphere);
     });
 
     return group;
+}
+
+export function updateMaterialsByFilters(objectsGroup, activeMoleculeSet) {
+    if (!objectsGroup) return;
+    const anyActive = activeMoleculeSet.size > 0;
+
+    objectsGroup.children.forEach(sphere => {
+        const { moleculeValues, material } = sphere.userData;
+        if (!anyActive) {
+            sphere.visible = false;
+            return;
+        }
+
+        let totalWeight = 0;
+        const color = new THREE.Color(0, 0, 0);
+        let maxValue = 0;
+
+        for (const [key, hexColor] of Object.entries(CRITERIA_COLORS)) {
+            if (!activeMoleculeSet.has(key)) continue;
+            const val = moleculeValues[key];
+            if (val > 0) {
+                totalWeight += val;
+                color.add(new THREE.Color(hexColor).multiplyScalar(val));
+                if (val > maxValue) maxValue = val;
+            }
+        }
+
+        if (totalWeight === 0) {
+            sphere.visible = false;
+            return;
+        }
+
+        color.multiplyScalar(1 / totalWeight);
+        const intensity = Math.min(maxValue, 6);
+        if (material && material.uniforms) {
+            material.uniforms.uColor.value = color;
+            material.uniforms.uIntensity.value = intensity;
+        }
+        sphere.visible = true;
+    });
 }
