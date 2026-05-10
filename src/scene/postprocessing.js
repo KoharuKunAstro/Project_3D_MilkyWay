@@ -5,7 +5,9 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 
 export function initPostProcessing (renderer, scene, camera) {
     const renderScene = new RenderPass(scene, camera);
+
     const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
+
     bloomPass.threshold = 0.1;
     bloomPass.strength = 0.6;
     bloomPass.radius = 0.5;
@@ -14,5 +16,5 @@ export function initPostProcessing (renderer, scene, camera) {
     composer.addPass(renderScene);
     composer.addPass(bloomPass);
 
-    return composer;
+    return {composer, bloomPass};
 }

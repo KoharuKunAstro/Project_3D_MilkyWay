@@ -5,10 +5,11 @@ import { generateDiskPoint } from './generators/disk.js';
 import { generateHaloPoint } from './generators/halo.js';
 import { initScene } from './scene/init.js';
 import { initPostProcessing } from './scene/postprocessing.js';
-import { createStarMaterial } from './materials/starmaterials.js';
+import { createStarMaterial } from './materials/starMaterials.js';
+import { createObjectMaterials } from './materials/objectMaterials.js';
 
 const {scene, camera, renderer, controls, container} = initScene();
-const composer = initPostProcessing(renderer, scene, camera);
+const {composer, bloomPass} = initPostProcessing(renderer, scene, camera);
 
 const position = new Float32Array(Total_Points * 3);
 const colors = new Float32Array(Total_Points * 3);
@@ -42,6 +43,13 @@ const material = createStarMaterial();
 const points = new THREE.Points(geometry, material);
 scene.add(points);
 
+fetch('merged_objects.json')
+   .then(res => res.json())
+   .then(data => {
+      const group = createObjectMaterials(data, 350);
+      scene.add(group);
+   });
+
 // Анимация
 function animate() {
     requestAnimationFrame(animate);
@@ -52,8 +60,12 @@ animate();
 
 // Ресайз
 window.addEventListener('resize', () => {
-    camera.aspect = container.clientWidth / container.clientHeight;
+    const w = container.clientWidth;
+    const h = container.clientHeight;
+    if (w === 0 || h === 0) return;
+    camera.aspect = w / h;
     camera.updateProjectionMatrix();
-    renderer.setSize(container.clientWidth, container.clientHeight);
-    composer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(w, h);
+    composer.setSize(w, h);
+    bloomPass.resolution.set(w, h);   // ← это обязательно
 });

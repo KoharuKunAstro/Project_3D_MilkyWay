@@ -6,6 +6,14 @@ export function initScene() {
     scene.background = new THREE.Color(0x050510);
 
     const container = document.getElementById('canvas-container')
+    // Если размеры ещё не вычислены (например, при первой загрузке), берём запасные
+    let width = container.clientWidth;
+    let height = container.clientHeight;
+    if (width === 0 || height === 0) {
+        width = 800;
+        height = 600;
+        console.warn('Контейнер имеет нулевые размеры, используются запасные');
+    }
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth/ container.clientHeight, 1, 200000);
     camera.position.set(0, -100000, 10000);
