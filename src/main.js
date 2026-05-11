@@ -7,6 +7,9 @@ import { initScene } from './scene/init.js';
 import { initPostProcessing } from './scene/postprocessing.js';
 import { createStarMaterial } from './materials/starMaterials.js';
 import { createObjectMaterials, updateMaterialsByFilters } from './materials/objectMaterials.js';
+import { initClickHandler } from './click.js';
+
+let objectsGroup = null;
 
 const {scene, camera, renderer, controls, container} = initScene();
 const {composer, bloomPass} = initPostProcessing(renderer, scene, camera);
@@ -43,8 +46,6 @@ const material = createStarMaterial();
 const points = new THREE.Points(geometry, material);
 scene.add(points);
 
-let objectsGroup;
-
 fetch('merged_objects.json')
    .then(res => res.json())
    .then(data => {
@@ -71,6 +72,14 @@ fetch('merged_objects.json')
           cb.addEventListener('change', applyFilters);
       });
       applyFilters(); // начальное состояние (все фильтры включены)
+
+      initClickHandler({
+         objectsGroup,
+         renderer,
+         camera,
+         baseRadius: 350,
+         highlightScale: 1.2
+      });
    });
    
 // Анимация

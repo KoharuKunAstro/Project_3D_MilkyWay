@@ -44,7 +44,8 @@ export function createObjectMaterials(data, baseRadius = 40) {
 
         sphere.userData = {
             moleculeValues,
-            material
+            material,
+            rawData: item
         };
         group.add(sphere);
     });
