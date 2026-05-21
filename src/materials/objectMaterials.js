@@ -1,6 +1,6 @@
-// objectMaterials.js
 import * as THREE from 'three';
 import { createGlowSphereMaterial } from './glowSphereMaterials.js';
+import { R_Sun } from '../config.js';
 
 const CRITERIA_COLORS = {
     CO:   0xff3333,
@@ -9,12 +9,12 @@ const CRITERIA_COLORS = {
     'HCO+': 0xe0e0e0
 };
 
-// Единая функция преобразования астрономических координат в декартовы
-// (вертикаль Z, совместимо с генераторами звёзд)
+// Функция преобразования астрономических координат в декартовы
+
 function astroToCartesian(l, b, r, scale = 3.2) {
     const lRad = l * Math.PI / 180;
     const bRad = b * Math.PI / 180;
-    const x = (r * scale) * Math.cos(lRad) * Math.cos(bRad);
+    const x = (r * scale) * Math.cos(lRad) * Math.cos(bRad) - R_Sun;
     const y = (r * scale) * Math.sin(lRad) * Math.cos(bRad);
     const z = (r * scale) * Math.sin(bRad);
     return new THREE.Vector3(x, y, z);
