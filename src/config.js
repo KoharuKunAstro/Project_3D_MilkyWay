@@ -15,4 +15,4 @@ export const Fraction_Disk = 0.8;
 export const Fraction_Galo = 0.1;
 export const Fraction_Arms = 0.6;
 
-export const Bar_Angle = 12 * Math.PI / 180;
+export const Bar_Angle = 27 * Math.PI / 180;

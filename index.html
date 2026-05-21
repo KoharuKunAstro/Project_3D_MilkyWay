@@ -4,14 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>3D Галактика | Молекулярное излучение</title>
-    <!-- Подключаем внешний файл стилей -->
     <link rel="stylesheet" href="./design.css">
 </head>
 <body>
     <div class="main-container">
         <!-- ВЕРХНИЙ СВЕТЛО-СЕРЫЙ ОВАЛ (ЗАГОЛОВОК) -->
         <div class="title-oval">
-            <h1>3D ГАЛАКТИКА</h1>
+            <h1>3D visualization of galaxy Milky Way</h1>
         </div>
 
         <!-- ЧЕРНЫЙ ОВАЛ (ГАЛАКТИКА) -->
@@ -23,8 +22,8 @@
         <div class="bottom-row">
             <!-- ФИЛЬТРЫ -->
             <div class="filter-panel">
-                <div class="filter-title">🔘 ФИЛЬТРЫ</div>
-                
+                <div class="filter-title">🔘 Filters</div>
+
                 <div class="filter-item">
                     <label class="switch">
                         <input type="checkbox" class="filter-checkbox" data-filter="co" checked>
@@ -32,7 +31,7 @@
                     </label>
                     <span class="filter-label">CO</span>
                 </div>
-                
+
                 <div class="filter-item">
                     <label class="switch">
                         <input type="checkbox" class="filter-checkbox" data-filter="oh" checked>
@@ -40,7 +39,7 @@
                     </label>
                     <span class="filter-label">OH</span>
                 </div>
-                
+
                 <div class="filter-item">
                     <label class="switch">
                         <input type="checkbox" class="filter-checkbox" data-filter="h2o" checked>
@@ -48,7 +47,7 @@
                     </label>
                     <span class="filter-label">H₂O</span>
                 </div>
-                
+
                 <div class="filter-item">
                     <label class="switch">
                         <input type="checkbox" class="filter-checkbox" data-filter="hco" checked>
@@ -58,43 +57,46 @@
                 </div>
             </div>
 
-            <!-- СВЕТЛО-СЕРЫЙ КОНТЕЙНЕР -->
+            <!-- СВЕТЛО-СЕРЫЙ КОНТЕЙНЕР ДАННЫХ -->
             <div class="data-container">
-                <div class="info-wrapper">
+                <!-- БЛОК С НАЗВАНИЕМ ОБЪЕКТА -->
+                <div class="object-name-box" id="objectNameBox">
+                    <span id="objectName">—</span>
+                </div>
+
+                <!-- ДВА БЛОКА В РЯД -->
+                <div class="info-row">
                     <!-- КООРДИНАТЫ -->
                     <div class="coord-box" id="coordPanel">
-                        <div class="panel-title">📡 ГАЛАКТИЧЕСКИЕ КООРДИНАТЫ</div>
+                        <div class="panel-title">📡 Galaxy coordinates</div>
                         <div class="param-row">
-                            <span class="param-label">Долгота (l)</span>
+                            <span class="param-label">longitude (l)</span>
                             <span class="param-value coord" id="coordL">—</span>
                         </div>
                         <div class="param-row">
-                            <span class="param-label">Широта (b)</span>
+                            <span class="param-label">latitude (b)</span>
                             <span class="param-value coord" id="coordB">—</span>
                         </div>
                         <div class="param-row">
-                            <span class="param-label">Расстояние (r)</span>
+                            <span class="param-label">distance (r)</span>
                             <span class="param-value distance" id="distanceR">—</span>
-                        </div>
-                        <div class="param-row">
-                            <span class="param-label">Скорость (V)</span>
-                            <span class="param-value velocity" id="velocityV">—</span>
                         </div>
                     </div>
 
-                    <!-- ПАРАМЕТРЫ (светимость L) -->
-                    <div class="luminosity-box" id="luminosityPanel">
-                        <div class="panel-title">✨ ФИЗИЧЕСКИЕ ПАРАМЕТРЫ</div>
+                    <!-- ИНТЕНСИВНОСТЬ, СКОРОСТЬ И ПЕРЕХОДЫ -->
+                    <div class="intensity-velocity-box" id="intVelPanel">
+                        <div class="panel-title">✨ Parameters</div>
                         <div class="param-row">
-                            <span class="param-label">Светимость (L)</span>
+                            <span class="param-label">Intensity (I)</span>
                             <span class="param-value luminosity" id="luminosityL">—</span>
                         </div>
-                        <div class="formula-box">
-                            <div class="formula-label">⚡ ЗАКОН СТЕФАНА–БОЛЬЦМАНА</div>
-                            <div class="formula-content">
-                                <span class="highlight">L = 4π·R²·σ·T⁴</span><br>
-                                M = M☉ - 2.5·log₁₀(L/L☉)
-                            </div>
+                        <div class="param-row">
+                            <span class="param-label">Velocity (V)</span>
+                            <span class="param-value velocity" id="velocityV">—</span>
+                        </div>
+                        <div class="param-row">
+                            <span class="param-label">Transition(s)</span>
+                            <span class="param-value transition" id="transitionValue">—</span>
                         </div>
                     </div>
                 </div>
@@ -102,7 +104,7 @@
 
             <!-- ЛЕГЕНДА -->
             <div class="legend-panel">
-                <div class="legend-title">⭐ МОЛЕКУЛЫ</div>
+                <div class="legend-title">⭐ Molecules</div>
                 <div class="legend-item">
                     <div class="legend-color" style="background: #ff5533;"></div>
                     <span class="legend-name">CO</span>

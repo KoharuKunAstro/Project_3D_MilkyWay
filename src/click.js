@@ -11,46 +11,57 @@ export function initClickHandler({ objectsGroup, renderer, camera, baseRadius = 
     let lastSelectedSphere = null;
     const highlightRadius = baseRadius * highlightScale;
 
-    // Обновление информационных панелей
     function updateInfoPanel(data) {
+        // Название объекта
+        document.getElementById('objectName').innerText = data.Name || '—';
+
         // Координаты
         document.getElementById('coordL').innerText = data.l?.toFixed(2) ?? '—';
         document.getElementById('coordB').innerText = data.b?.toFixed(2) ?? '—';
         document.getElementById('distanceR').innerText = data.r?.toFixed(0) ?? '—';
+
+        // Скорость
         document.getElementById('velocityV').innerText = data.v_r?.toFixed(1) ?? '—';
-        
-        // Светимость (сумма интенсивностей)
+
+        // Интенсивность (сумма)
         let totalIntensity = (data.CO || 0) + (data.H2O || 0) + (data.OH || 0) + (data['HCO+'] || 0);
         document.getElementById('luminosityL').innerText = totalIntensity.toFixed(2);
-        
-        // Имя объекта в панели легенды
-        const legendTitle = document.querySelector('.legend-title');
-        if (legendTitle) {
-            legendTitle.innerHTML = `⭐ ${data.Name || 'Объект'}`;
+
+        // Переходы: теперь это объект { CO: [...], OH: [...], ... }
+        let transitionsText = '—';
+        if (data.Transitions) {
+            const parts = [];
+            // Проходим по молекулам, которые сейчас отображаются (можно фильтровать по активным)
+            const molecules = ['CO', 'OH', 'H2O', 'HCO+'];
+            molecules.forEach(mol => {
+                if (data.Transitions[mol]) {
+                    parts.push(`${mol}: ${data.Transitions[mol].join(', ')}`);
+                }
+            });
+            transitionsText = parts.length > 0 ? parts.join('; ') : '—';
         }
-        
-        // Анимация панелей (мигание)
-        const panels = ['.coord-box', '.luminosity-box'];
+        document.getElementById('transitionValue').innerText = transitionsText;
+
+        // Анимация обновления
+        const panels = ['.coord-box', '.intensity-velocity-box'];
         panels.forEach(sel => {
             const el = document.querySelector(sel);
             if (el) {
                 el.classList.remove('data-updated');
-                void el.offsetWidth; // принудительная перерисовка
+                void el.offsetWidth;
                 el.classList.add('data-updated');
             }
         });
     }
 
     function clearInfoPanel() {
+        document.getElementById('objectName').innerText = '—';
         document.getElementById('coordL').innerText = '—';
         document.getElementById('coordB').innerText = '—';
         document.getElementById('distanceR').innerText = '—';
         document.getElementById('velocityV').innerText = '—';
         document.getElementById('luminosityL').innerText = '—';
-        const legendTitle = document.querySelector('.legend-title');
-        if (legendTitle && !legendTitle.innerHTML.includes('МОЛЕКУЛЫ')) {
-            legendTitle.innerHTML = '⭐ МОЛЕКУЛЫ';
-        }
+        document.getElementById('transitionValue').innerText = '—';
     }
 
     function resetSelection() {
@@ -60,7 +71,6 @@ export function initClickHandler({ objectsGroup, renderer, camera, baseRadius = 
         }
     }
 
-    // Обработчик клика
     window.addEventListener('click', (event) => {
         if (!objectsGroup) return;
 
