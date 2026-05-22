@@ -2,7 +2,7 @@ import {R_Disk} from './config.js';
 
 //Генерация радиуса диска (межрукавного)
 export function randomDiskRadius() {
-    const scale = 12000;
+    const scale = 45000;
     const maxR = R_Disk;
     let r;
     do {
