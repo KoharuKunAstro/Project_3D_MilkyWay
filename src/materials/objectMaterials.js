@@ -11,7 +11,7 @@ const CRITERIA_COLORS = {
 
 // Функция преобразования астрономических координат в декартовы
 
-function astroToCartesian(l, b, r, scale = 3.2) {
+function astroToCartesian(l, b, r, scale = 3.26) {
     const lRad = l * Math.PI / 180;
     const bRad = b * Math.PI / 180;
     const x = (r * scale) * Math.cos(lRad) * Math.cos(bRad) - R_Sun;
