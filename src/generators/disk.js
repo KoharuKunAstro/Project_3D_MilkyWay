@@ -8,7 +8,7 @@ export function generateDiskPoint() {
     if (isArm) {
         const armIndex = Math.floor(Math.random() * Arms_Count); // 0..3
         const maxR = R_Disk;
-        const scale = 12000;
+        const scale = 30000;
 
         const barLength = R_Buldge * 2.5; // ~8150 пк
 
